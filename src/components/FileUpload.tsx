@@ -48,7 +48,14 @@ export function FileUpload({
 
     return (
         <div
-            className={`upload-zone ${isDragging ? 'active' : ''} ${hasFile ? 'has-file' : ''}`}
+            className={`
+                relative flex flex-col items-center justify-center gap-3 p-6 min-h-[120px] 
+                bg-card/30 border-2 rounded-xl transition-all duration-300
+                ${isDragging
+                    ? 'border-primary bg-primary/5 shadow-[0_0_20px_rgba(250,45,72,0.1)]'
+                    : hasFile ? 'border-primary bg-primary/10' : 'border-dashed border-border/50 hover:bg-card/50 hover:border-primary/50'}
+                cursor-pointer overflow-hidden group
+            `}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -60,39 +67,32 @@ export function FileUpload({
         >
             <input
                 type="file"
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                 accept={accept}
                 onChange={handleFileChange}
                 aria-label={label}
             />
 
             {previewUrl && (
-                <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'rgba(0, 0, 0, 0.6)',
-                    backdropFilter: 'blur(4px)'
-                }} />
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
             )}
 
-            <div className="upload-zone-icon" style={{ position: 'relative', zIndex: 1 }}>
-                {hasFile ? <Check size={24} /> : icon}
+            <div className={`relative z-0 transition-colors duration-300 ${hasFile ? 'text-white' : 'text-muted-foreground group-hover:text-foreground'}`}>
+                {hasFile ? <Check size={24} className="text-primary drop-shadow-md" /> : icon}
             </div>
 
-            <div className="upload-zone-text" style={{ position: 'relative', zIndex: 1 }}>
+            <div className="relative z-0 text-center">
                 {hasFile ? (
-                    <span className="upload-zone-filename">{file.name}</span>
+                    <span className="text-xs font-medium text-primary break-all line-clamp-1 px-4">{file.name}</span>
                 ) : (
-                    <>
-                        <strong>{label}</strong>
-                        <br />
-                        <span style={{ fontSize: '11px', opacity: 0.7 }}>
+                    <div className="flex flex-col gap-1">
+                        <strong className="text-sm font-medium text-foreground">{label}</strong>
+                        <span className="text-[10px] text-muted-foreground">
                             Drop file or click to browse
                         </span>
-                    </>
+                    </div>
                 )}
             </div>
         </div>
     );
 }
-
-export default FileUpload;

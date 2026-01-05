@@ -40,6 +40,8 @@ export interface VideoSettings {
   fps: number;            // typically 30
   width: number;          // 1920
   height: number;         // 1080
+  title?: string;
+  artist?: string;
 }
 
 export interface LyricState {

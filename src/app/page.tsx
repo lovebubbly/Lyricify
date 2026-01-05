@@ -19,7 +19,9 @@ const defaultSettings: VideoSettings = {
   blurIntensity: 80,
   fps: 30,
   width: 1920,
-  height: 1080
+  height: 1080,
+  title: '',
+  artist: ''
 };
 
 export default function Home() {
@@ -126,50 +128,139 @@ export default function Home() {
   // Handle settings changes
   const handleSettingsChange = useCallback((
     key: keyof VideoSettings,
-    value: number
+    value: number | string
   ) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    setSettings(prev => {
+      const newSettings = { ...prev, [key]: value };
+      console.log('Saving settings:', newSettings); // Debug
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lyricify-settings', JSON.stringify(newSettings));
+      }
+      return newSettings;
+    });
   }, []);
 
-  // Handle render (mock for now)
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lyricify-settings');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          console.log('Loaded settings:', parsed); // Debug
+          setSettings(prev => ({
+            ...prev,
+            ...parsed
+          }));
+        } catch (e) {
+          console.error('Failed to parse saved settings', e);
+        }
+      }
+    }
+  }, []);
+
+  // Helper to get audio duration
+  const getAudioDuration = (file: File): Promise<number> => {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const audio = new Audio(url);
+      audio.onloadedmetadata = () => {
+        resolve(audio.duration);
+        URL.revokeObjectURL(url);
+      };
+      audio.onerror = (e) => {
+        reject(e);
+        URL.revokeObjectURL(url);
+      };
+    });
+  };
+
+  // Handle render
   const handleRender = useCallback(async () => {
+    if (!files.audio || !files.coverArt) return;
+
     setRenderProgress({
       status: 'preparing',
       progress: 0,
-      message: 'Preparing video...'
+      message: 'Preparing assets...'
     });
 
-    // Simulate render progress
-    const steps = [
-      { status: 'preparing' as const, progress: 10, message: 'Loading assets...' },
-      { status: 'rendering' as const, progress: 30, message: 'Rendering frames...' },
-      { status: 'rendering' as const, progress: 50, message: 'Rendering frames...' },
-      { status: 'rendering' as const, progress: 70, message: 'Rendering frames...' },
-      { status: 'encoding' as const, progress: 85, message: 'Encoding video...' },
-      { status: 'encoding' as const, progress: 95, message: 'Finalizing...' },
-      { status: 'complete' as const, progress: 100, message: 'Complete!' }
-    ];
+    try {
+      // Get audio duration to calculate frames
+      const duration = await getAudioDuration(files.audio);
+      const durationInFrames = Math.ceil(duration * settings.fps);
 
-    for (const step of steps) {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setRenderProgress(prev => ({
-        ...prev,
-        ...step,
-        estimatedTimeRemaining: Math.ceil((100 - step.progress) / 10)
-      }));
-    }
-
-    // Show completion briefly then reset
-    setTimeout(() => {
       setRenderProgress({
-        status: 'idle',
+        status: 'rendering',
+        progress: 10,
+        message: 'Rendering video on server... (This may take a while)'
+      });
+
+      const formData = new FormData();
+      formData.append('audio', files.audio);
+      formData.append('coverArt', files.coverArt);
+
+      const renderData = {
+        mainLyrics,
+        subLyrics,
+        colorPalette,
+        settings,
+        durationInFrames
+      };
+
+      formData.append('data', JSON.stringify(renderData));
+
+      const response = await fetch('/api/render', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Rendering failed');
+      }
+
+      setRenderProgress({
+        status: 'encoding',
+        progress: 90,
+        message: 'Downloading video...'
+      });
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'lyric-video.mp4';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setRenderProgress({
+        status: 'complete',
+        progress: 100,
+        message: 'Complete!'
+      });
+
+      // Reset after delay
+      setTimeout(() => {
+        setRenderProgress({
+          status: 'idle',
+          progress: 0,
+          message: ''
+        });
+      }, 3000);
+
+    } catch (error) {
+      console.error('Export failed:', error);
+      setRenderProgress({
+        status: 'idle', // Reset to idle so user can try again
         progress: 0,
         message: ''
       });
-      // Mock download
-      alert('Video rendered successfully! (This is a demo - full rendering requires Remotion server-side setup)');
-    }, 1000);
-  }, []);
+      alert(`Export failed: ${(error as Error).message}`);
+    }
+  }, [files.audio, files.coverArt, mainLyrics, subLyrics, colorPalette, settings]);
 
   // Handle cancel render
   const handleCancelRender = useCallback(() => {
@@ -210,7 +301,7 @@ export default function Home() {
     renderProgress.status !== 'complete';
 
   return (
-    <div className="app-container">
+    <div className="flex h-screen overflow-hidden bg-background font-sans">
       {/* Sidebar */}
       <Sidebar
         files={files}

@@ -112,7 +112,7 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '80px 60px',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+                fontFamily: '"Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
             }}
         >
             {visibleLines.map((line) => {

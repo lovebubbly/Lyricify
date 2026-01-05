@@ -88,7 +88,7 @@ export function VideoPreview({
 
     // Get surrounding lyrics for display
     const getVisibleLyrics = () => {
-        const visibleRange = 3; // Show 3 lines before and after
+        const visibleRange = 5; // Show 5 lines before and after for more context
         const start = Math.max(0, activeMainIndex - visibleRange);
         const end = Math.min(mainLyrics.length, activeMainIndex + visibleRange + 1);
         return mainLyrics.slice(start, end).map((line, idx) => ({
@@ -112,7 +112,9 @@ export function VideoPreview({
     };
 
     return (
-        <div className="main-content">
+        <div className="flex-1 flex flex-col items-center justify-center p-10 bg-background relative overflow-hidden">
+            {/* Background Gradient Mesh - optional, could be added here */}
+
             {/* Hidden audio element */}
             {audioUrl && (
                 <audio
@@ -125,192 +127,178 @@ export function VideoPreview({
             )}
 
             {/* Video Preview Container */}
-            <div className="video-preview-container">
+            <div className="relative w-full max-w-5xl aspect-video bg-card/40 rounded-[32px] overflow-hidden shadow-2xl border border-white/10 backdrop-blur-sm">
                 {hasContent && colorPalette ? (
                     <>
-                        {/* Dynamic Background with Mesh Movement */}
+                        {/* Dynamic Background - heavier blur */}
                         <div
-                            className="dynamic-bg-animated"
+                            className="absolute inset-[-15%] bg-center bg-cover opacity-90 scale-125"
                             style={{
-                                position: 'absolute',
-                                inset: '-10%',
                                 backgroundImage: `url(${coverArtUrl})`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                                filter: `blur(${settings.blurIntensity}px) saturate(1.3)`,
-                                opacity: 0.85
+                                filter: `blur(${Math.max(100, settings.blurIntensity)}px) saturate(1.2)`,
                             }}
                         />
 
                         {/* Color Overlay with Pulse */}
                         <div
-                            className="color-overlay-animated"
+                            className="absolute inset-0 animate-pulse"
                             style={{
-                                position: 'absolute',
-                                inset: 0,
-                                background: generateGradientBackground(colorPalette)
+                                background: generateGradientBackground(colorPalette),
+                                animationDuration: '4s'
                             }}
                         />
 
                         {/* Dark Overlay for Text Readability */}
-                        <div
-                            style={{
-                                position: 'absolute',
-                                inset: 0,
-                                background: 'linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%)'
-                            }}
-                        />
+                        <div className="absolute inset-0 bg-gradient-to-br from-black/30 to-black/60" />
 
                         {/* Split Layout: Album Cover Left + Lyrics Right */}
-                        <div
-                            style={{
-                                position: 'absolute',
-                                inset: 0,
-                                display: 'flex',
-                                alignItems: 'center',
-                                padding: '60px',
-                                gap: '60px'
-                            }}
-                        >
+                        <div className="absolute inset-0 flex items-center p-20 gap-20">
                             {/* Left Side: Album Cover */}
-                            <div
-                                style={{
-                                    flex: '0 0 auto',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    gap: '20px'
-                                }}
-                            >
+                            {/* Left Side: Album Cover & Metadata */}
+                            <div className="flex-none flex flex-col items-center gap-6 z-10">
                                 <div
-                                    className="album-cover-animated"
-                                    style={{
-                                        width: '280px',
-                                        height: '280px',
-                                        borderRadius: '16px',
-                                        overflow: 'hidden',
-                                        border: '1px solid rgba(255,255,255,0.1)'
-                                    }}
+                                    className="w-60 h-60 rounded-xl overflow-hidden shadow-2xl border border-white/10 animate-album-breathing"
                                 >
                                     <img
                                         src={coverArtUrl}
                                         alt="Album Cover"
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            objectFit: 'cover'
-                                        }}
+                                        className="w-full h-full object-cover"
                                     />
                                 </div>
+                                {/* Metadata Display */}
+                                {(settings.title || settings.artist) && (
+                                    <div className="flex flex-col items-center text-center gap-1 animate-fade-in">
+                                        {settings.title && (
+                                            <h2 className="text-2xl font-bold text-white tracking-tight leading-tight max-w-[280px]">
+                                                {settings.title}
+                                            </h2>
+                                        )}
+                                        {settings.artist && (
+                                            <p className="text-base text-white/60 font-medium">
+                                                {settings.artist}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Right Side: Lyrics */}
-                            <div
-                                style={{
-                                    flex: 1,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'flex-start',
-                                    justifyContent: 'center',
-                                    overflow: 'hidden',
-                                    maxHeight: '100%'
-                                }}
-                            >
-                                {getVisibleLyrics().map((line) => {
-                                    const isActive = line.relativeIndex === 0;
-                                    const activeSub = getActiveSub(line.text);
-                                    const distance = Math.abs(line.relativeIndex);
+                            {/* Right Side: Lyrics with vertical scroll */}
+                            <div className="flex-1 h-full relative overflow-hidden pl-3">
+                                <div className="absolute inset-0 flex flex-col items-start justify-center">
+                                    {getVisibleLyrics().map((line) => {
+                                        const isActive = line.relativeIndex === 0;
+                                        const activeSub = getActiveSub(line.text);
+                                        const distance = Math.abs(line.relativeIndex);
 
-                                    return (
-                                        <div
-                                            key={line.id}
-                                            className={`lyric-line ${isActive ? 'active' : ''}`}
-                                            style={{
-                                                textAlign: 'left',
-                                                marginBottom: isActive ? '14px' : '10px',
-                                                opacity: isActive ? 1 : Math.max(0.15, 0.5 - distance * 0.12),
-                                                transform: isActive
-                                                    ? 'scale(1) translateX(0)'
-                                                    : `scale(${Math.max(0.88, 1 - distance * 0.04)}) translateX(${-6 * distance}px)`,
-                                                filter: isActive ? 'blur(0px)' : `blur(${Math.min(distance * 1.2, 3.5)}px)`,
-                                            }}
-                                        >
-                                            {/* Main Lyric Line */}
-                                            <p
-                                                className={isActive ? 'lyric-text' : ''}
+                                        // Dynamic constant height for every line to prevent jumping
+                                        // Main font (1.1x) + Gap + Sub font (0.45x) + Safety buffer
+                                        const itemHeight = settings.fontSize * 2.5;
+                                        const baseY = line.relativeIndex * itemHeight;
+
+                                        return (
+                                            <div
+                                                key={line.id}
+                                                className={`lyric-line w-full text-left absolute left-0 ${isActive ? 'active z-10' : 'z-0'}`}
                                                 style={{
-                                                    fontSize: isActive ? settings.fontSize : settings.fontSize * 0.72,
-                                                    fontWeight: isActive ? 700 : 500,
-                                                    color: '#ffffff',
-                                                    textShadow: isActive
-                                                        ? '0 3px 30px rgba(255,255,255,0.4), 0 0 60px rgba(255,255,255,0.15)'
-                                                        : '0 2px 15px rgba(0,0,0,0.4)',
-                                                    lineHeight: 1.25,
-                                                    margin: 0,
-                                                    letterSpacing: isActive ? '-0.02em' : '0'
+                                                    top: '50%',
+                                                    height: `${itemHeight}px`, // Explicit height for debugging/layout
+                                                    transform: `translateY(calc(-50% + ${baseY}px)) scale(${isActive ? 1 : Math.max(0.9, 1 - distance * 0.04)})`,
+                                                    opacity: isActive ? 1 : Math.max(0.1, 0.45 - distance * 0.15),
+                                                    filter: isActive ? 'blur(0px)' : `blur(${Math.min(distance * 1.5, 5)}px)`,
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    justifyContent: 'center'
                                                 }}
                                             >
-                                                {line.text}
-                                            </p>
-
-                                            {/* Translation (only for active line) */}
-                                            {isActive && activeSub && (
+                                                {/* Main Lyric Line */}
                                                 <p
-                                                    className="lyric-subtitle"
+                                                    className={`font-semibold leading-tight m-0 ${isActive ? 'text-white font-extrabold tracking-tight' : 'text-white'}`}
                                                     style={{
-                                                        fontSize: settings.fontSize * 0.48,
-                                                        fontWeight: 500,
-                                                        color: colorPalette.vibrant,
-                                                        marginTop: '8px',
-                                                        textShadow: `0 2px 20px ${colorPalette.vibrant}40`,
-                                                        letterSpacing: '0.01em'
+                                                        fontSize: isActive ? settings.fontSize * 1.1 : settings.fontSize * 0.7,
+                                                        textShadow: isActive ? '0 4px 30px rgba(0,0,0,0.5)' : 'none',
+                                                        letterSpacing: isActive ? '-0.02em' : '-0.01em',
+                                                        marginBottom: '8px'
                                                     }}
                                                 >
-                                                    {activeSub.text}
+                                                    {line.text}
                                                 </p>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+
+                                                {/* Translation Container - Always reserves space */}
+                                                <div
+                                                    style={{
+                                                        minHeight: `${settings.fontSize * 0.65 * 1.4}px`, // Reserve space based on larger sub font
+                                                        opacity: isActive ? 1 : 0.6, // Increased inactive opacity for better readability
+                                                        transition: 'opacity 500ms ease',
+                                                        display: 'flex',
+                                                        alignItems: 'flex-start', // Align text to top of container
+                                                        justifyContent: 'flex-start',
+                                                        marginTop: '4px'
+                                                    }}
+                                                >
+                                                    {/* Render sub or empty space. */}
+                                                    {activeSub ? (
+                                                        <p
+                                                            className="font-medium text-white/80 transition-all duration-500 ease-out"
+                                                            style={{
+                                                                fontSize: settings.fontSize * 0.65, // Increased from 0.45
+                                                                textShadow: isActive ? '0 2px 10px rgba(0,0,0,0.5)' : 'none',
+                                                                margin: 0,
+                                                                lineHeight: 1.4,
+                                                                textAlign: 'left'
+                                                            }}
+                                                        >
+                                                            {activeSub.text}
+                                                        </p>
+                                                    ) : null}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
 
                         {/* Player Controls */}
-                        <div className="player-controls">
+                        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent flex items-center gap-4">
                             <button
-                                className="play-button"
+                                className="w-11 h-11 flex items-center justify-center bg-white rounded-full text-black hover:scale-105 active:scale-95 transition-transform shadow-lg"
                                 onClick={togglePlayback}
                                 aria-label={isPlaying ? 'Pause' : 'Play'}
                             >
-                                {isPlaying ? <Pause size={20} /> : <Play size={20} style={{ marginLeft: 2 }} />}
+                                {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
                             </button>
 
-                            <div className="timeline" onClick={handleTimelineClick}>
+                            <div
+                                className="flex-1 h-1 bg-white/20 rounded-full cursor-pointer relative group py-2"
+                                onClick={handleTimelineClick}
+                            >
+                                <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1 bg-white/20 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-white rounded-full"
+                                        style={{ width: `${progress}%` }}
+                                    />
+                                </div>
                                 <div
-                                    className="timeline-progress"
-                                    style={{ width: `${progress}%` }}
-                                />
-                                <div
-                                    className="timeline-handle"
+                                    className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
                                     style={{ left: `${progress}%` }}
                                 />
                             </div>
 
-                            <div className="time-display">
+                            <div className="min-w-[80px] text-right text-xs font-medium tabular-nums text-white/60">
                                 {formatTime(currentTime)} / {formatTime(duration)}
                             </div>
                         </div>
                     </>
                 ) : (
                     /* Placeholder when no content */
-                    <div className="video-preview-placeholder">
-                        <div className="video-preview-placeholder-icon">
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <rect x="2" y="2" width="20" height="20" rx="2" />
-                                <polygon points="10 8 16 12 10 16 10 8" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted-foreground/40">
+                        <div className="p-6 rounded-3xl bg-white/5 border border-white/5 backdrop-blur-sm">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/20">
+                                <rect x="2" y="2" width="20" height="20" rx="4" />
+                                <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none" />
                             </svg>
                         </div>
-                        <p className="video-preview-placeholder-text">
+                        <p className="text-sm font-medium">
                             Upload audio, cover art, and lyrics to preview
                         </p>
                     </div>
@@ -320,4 +308,4 @@ export function VideoPreview({
     );
 }
 
-export default VideoPreview;
+
