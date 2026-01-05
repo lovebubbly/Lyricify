@@ -1,17 +1,25 @@
 {
-  "name": "temp-init",
+  "name": "lyricify",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "remotion:preview": "remotion preview src/remotion/index.ts",
+    "remotion:render": "remotion render src/remotion/index.ts LyricVideo out/video.mp4"
   },
   "dependencies": {
+    "@remotion/cli": "^4.0.400",
+    "@remotion/player": "^4.0.400",
+    "colorthief": "^2.6.0",
+    "framer-motion": "^12.23.28",
+    "lucide-react": "^0.562.0",
     "next": "16.1.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "remotion": "^4.0.400"
   },
   "devDependencies": {
     "@types/node": "^20",
