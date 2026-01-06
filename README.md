@@ -12,8 +12,9 @@
 - **🎨 자동 색상 팔레트 추출** - 앨범 아트에서 색상을 추출하여 조화로운 배경 그라데이션을 자동 생성
 - **📝 듀얼 자막 지원** - 메인 가사와 보조 가사(번역/발음)를 동시에 표시
 - **🎬 실시간 프리뷰** - 오디오와 함께 가사 싱크를 바로 확인
-- **⚙️ 커스터마이징** - 폰트 크기, 블러 강도, 해상도, FPS 등 세부 설정 가능
-- **🌈 Spring Physics 애니메이션** - 자연스럽고 부드러운 가사 전환 효과
+- **⚙️ 커스터마이징** - 폰트 크기, 블러 강도, 해상도, FPS(30/60) 등 세부 설정 가능
+- **🌈 60FPS & High-Bitrate** - "쫀득한" 움직임을 위한 60fps 렌더링 및 고품질(CRF 18) 인코딩 지원
+- **✨ Premium Spring Physics** - 부드럽고 탄력 있는 가사 전환 애니메이션
 
 ## 🛠️ 기술 스택
 
@@ -21,7 +22,7 @@
 |------|------|
 | **프레임워크** | Next.js 16 (App Router) |
 | **UI 라이브러리** | React 19 |
-| **영상 렌더링** | Remotion 4.0 |
+| **영상 렌더링** | Remotion 4.0 (CRF 18, 60FPS) |
 | **애니메이션** | Framer Motion 12 |
 | **아이콘** | Lucide React |
 | **색상 추출** | ColorThief |
@@ -31,18 +32,10 @@
 
 ```
 src/
-├── app/              # Next.js App Router
-├── components/       # React 컴포넌트
-│   ├── FileUpload    # 파일 업로드 컴포넌트
-│   ├── Sidebar       # 설정 사이드바
-│   ├── Slider        # 슬라이더 컨트롤
-│   ├── VideoPreview  # 비디오 미리보기
-│   └── LoadingOverlay # 로딩 오버레이
-├── lib/              # 유틸리티 함수
-│   ├── srtParser     # SRT 파일 파서
-│   ├── colorExtractor # 색상 추출기
-│   └── audioUtils    # 오디오 유틸리티
-├── remotion/         # Remotion 비디오 컴포넌트
+├── app/              # Next.js App Router & API Routes
+├── components/       # UI 컴포넌트 (Sidebar, VideoPreview 등)
+├── lib/              # 비즈니스 로직 (SRT 파서, 애니메이션 물리 등)
+├── remotion/         # Remotion 비디오 컴포지션 및 딜리버리
 └── types/            # TypeScript 타입 정의
 ```
 
@@ -52,12 +45,13 @@ src/
 
 - Node.js 18 이상
 - npm 또는 yarn
+- **FFmpeg** (Remotion 렌더링 시 필요)
 
 ### 설치
 
 ```bash
 # 저장소 클론
-git clone https://github.com/yunseongcho/Lyricify.git
+git clone https://github.com/lovebubbly/Lyricify.git
 cd Lyricify
 
 # 의존성 설치
@@ -75,24 +69,22 @@ npm run dev
 2. **앨범 아트** (.jpg, .png 등) 업로드
 3. **메인 자막** (.srt) 파일 업로드
 4. (선택) **보조 자막** (.srt) 업로드
-5. 설정 조정 후 **렌더링** 버튼 클릭
+5. 사이드바에서 **FPS(60 권장)** 및 시각 효과 조정
+6. **Export Video** 버튼 클릭 후 렌더링 대기
 
 ### Scripts
 
 ```bash
-# 개발 서버
+# 개발 서버 (포트 3001 등 커스텀 가능)
 npm run dev
 
 # 프로덕션 빌드
 npm run build
 
-# 프로덕션 실행
-npm start
-
-# Remotion 미리보기
+# Remotion 미리보기 (독립 실행)
 npm run remotion:preview
 
-# 비디오 렌더링
+# CLI 환경에서 비디오 렌더링
 npm run remotion:render
 ```
 
@@ -116,4 +108,4 @@ MIT License - 자유롭게 사용하세요.
 
 ---
 
-Made with ❤️ by Yunseong Cho
+Made with ❤️ by [Yunseong Cho](https://github.com/lovebubbly)
