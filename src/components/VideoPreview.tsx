@@ -187,13 +187,21 @@ export function VideoPreview({
                                 <div className="absolute inset-0 flex flex-col items-start justify-center">
                                     {getVisibleLyrics().map((line) => {
                                         const isActive = line.relativeIndex === 0;
-                                        const activeSub = getActiveSub(line.text);
                                         const distance = Math.abs(line.relativeIndex);
 
-                                        // Dynamic constant height for every line to prevent jumping
-                                        // Main font (1.1x) + Gap + Sub font (0.45x) + Safety buffer
-                                        const itemHeight = settings.fontSize * 2.5;
-                                        const baseY = line.relativeIndex * itemHeight;
+                                        // Subtitle Lookup (timestamp-based)
+                                        const matchingSub = subLyrics.find(sub => {
+                                            const overlapStart = Math.max(sub.startTime, line.startTime);
+                                            const overlapEnd = Math.min(sub.endTime, line.endTime);
+                                            return (overlapEnd - overlapStart) > 0.1;
+                                        });
+
+                                        const activeSub = matchingSub && shouldShowSubtitle(line.text, matchingSub.text) ? matchingSub : undefined;
+
+                                        // FIXED uniform height for ALL lines (prevents overlap)
+                                        // Height accommodates: Main text + potential subtitle + padding
+                                        const lineHeight = settings.fontSize * 3;
+                                        const translateY = line.relativeIndex * lineHeight;
 
                                         return (
                                             <div
@@ -201,56 +209,42 @@ export function VideoPreview({
                                                 className={`lyric-line w-full text-left absolute left-0 ${isActive ? 'active z-10' : 'z-0'}`}
                                                 style={{
                                                     top: '50%',
-                                                    height: `${itemHeight}px`, // Explicit height for debugging/layout
-                                                    transform: `translateY(calc(-50% + ${baseY}px)) scale(${isActive ? 1 : Math.max(0.9, 1 - distance * 0.04)})`,
-                                                    opacity: isActive ? 1 : Math.max(0.1, 0.45 - distance * 0.15),
-                                                    filter: isActive ? 'blur(0px)' : `blur(${Math.min(distance * 1.5, 5)}px)`,
+                                                    height: `${lineHeight}px`,
+                                                    transform: `translateY(calc(-50% + ${translateY}px)) scale(${isActive ? 1 : Math.max(0.92, 1 - distance * 0.02)})`,
+                                                    opacity: isActive ? 1 : Math.max(0.15, 0.5 - distance * 0.12),
+                                                    filter: isActive ? 'blur(0px)' : `blur(${Math.min(distance * 1, 4)}px)`,
                                                     display: 'flex',
                                                     flexDirection: 'column',
-                                                    justifyContent: 'center'
+                                                    justifyContent: 'center',
+                                                    transition: 'transform 0.4s ease-out, opacity 0.4s ease-out, filter 0.4s ease-out'
                                                 }}
                                             >
-                                                {/* Main Lyric Line */}
+                                                {/* Main Lyric */}
                                                 <p
-                                                    className={`font-semibold leading-tight m-0 ${isActive ? 'text-white font-extrabold tracking-tight' : 'text-white'}`}
+                                                    className={`font-semibold leading-tight m-0 ${isActive ? 'text-white font-extrabold tracking-tight' : 'text-white/90'}`}
                                                     style={{
-                                                        fontSize: isActive ? settings.fontSize * 1.1 : settings.fontSize * 0.7,
-                                                        textShadow: isActive ? '0 4px 30px rgba(0,0,0,0.5)' : 'none',
-                                                        letterSpacing: isActive ? '-0.02em' : '-0.01em',
-                                                        marginBottom: '8px'
+                                                        fontSize: isActive ? settings.fontSize * 1.1 : settings.fontSize * 0.75,
+                                                        textShadow: isActive ? '0 4px 20px rgba(0,0,0,0.5)' : 'none',
+                                                        letterSpacing: isActive ? '-0.02em' : '-0.01em'
                                                     }}
                                                 >
                                                     {line.text}
                                                 </p>
 
-                                                {/* Translation Container - Always reserves space */}
-                                                <div
-                                                    style={{
-                                                        minHeight: `${settings.fontSize * 0.65 * 1.4}px`, // Reserve space based on larger sub font
-                                                        opacity: isActive ? 1 : 0.6, // Increased inactive opacity for better readability
-                                                        transition: 'opacity 500ms ease',
-                                                        display: 'flex',
-                                                        alignItems: 'flex-start', // Align text to top of container
-                                                        justifyContent: 'flex-start',
-                                                        marginTop: '4px'
-                                                    }}
-                                                >
-                                                    {/* Render sub or empty space. */}
-                                                    {activeSub ? (
-                                                        <p
-                                                            className="font-medium text-white/80 transition-all duration-500 ease-out"
-                                                            style={{
-                                                                fontSize: settings.fontSize * 0.65, // Increased from 0.45
-                                                                textShadow: isActive ? '0 2px 10px rgba(0,0,0,0.5)' : 'none',
-                                                                margin: 0,
-                                                                lineHeight: 1.4,
-                                                                textAlign: 'left'
-                                                            }}
-                                                        >
-                                                            {activeSub.text}
-                                                        </p>
-                                                    ) : null}
-                                                </div>
+                                                {/* English Subtitle (only rendered if exists) */}
+                                                {activeSub && (
+                                                    <p
+                                                        className="font-medium text-white/75 mt-2"
+                                                        style={{
+                                                            fontSize: settings.fontSize * 0.55,
+                                                            textShadow: isActive ? '0 2px 10px rgba(0,0,0,0.4)' : 'none',
+                                                            lineHeight: 1.3,
+                                                            opacity: isActive ? 1 : 0.7
+                                                        }}
+                                                    >
+                                                        {activeSub.text}
+                                                    </p>
+                                                )}
                                             </div>
                                         );
                                     })}

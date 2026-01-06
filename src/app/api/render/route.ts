@@ -36,31 +36,48 @@ export async function POST(req: NextRequest) {
         await writeFilePromise(audioPath, audioBuffer);
         await writeFilePromise(coverPath, coverBuffer);
 
+        // Determine base URL from request headers
+        const host = req.headers.get('host') || 'localhost:3000';
+        const protocol = 'http'; // Assumed http for local rendering
+        const baseUrl = `${protocol}://${host}`;
+
         // Prepare input props
-        // We need to pass file paths that Remotion can access. 
-        // Since we are running locally, absolute paths work.
+        // We use the proxy API to serve the files via HTTP to bypass file:// restrictions
         const inputProps = {
             ...data,
-            audioUrl: audioPath, // Remotion can read from local path
-            coverArtUrl: coverPath // Remotion can read from local path
+            audioUrl: `${baseUrl}/api/serve-file?file=${encodeURIComponent(audioPath)}`,
+            coverArtUrl: `${baseUrl}/api/serve-file?file=${encodeURIComponent(coverPath)}`
         };
 
         // Calculate duration in frames if not provided (fallback) or use provided
         // For now trust the duration passed from frontend which calculated it from audio metadata
 
-        const propsJson = JSON.stringify(inputProps);
+        const propsPath = path.join(tmpDir, `props_${uniqueId}.json`);
 
-        // Command to render
-        // We use npx remotion render
-        // output path
+        // Write props to file to avoid command line length limits and quoting issues
+        await writeFilePromise(propsPath, JSON.stringify(inputProps));
+
         console.log('Starting render...');
 
-        // Escape single quotes in JSON for shell command (basic protection)
-        const escapedProps = propsJson.replace(/'/g, "'\\''");
+        const fps = data.settings?.fps || 60;
 
-        const command = `npx remotion render src/remotion/index.ts LyricVideo ${outputPath} --props='${escapedProps}'`;
+        // Calculate total frames. Expect frontend to pass durationInFrames.
+        // If not, default to 300 (5 seconds at 60fps) to avoid 0 frame error
+        const durationInFrames = data.durationInFrames || 300;
 
-        await execPromise(command, { cwd: process.cwd() });
+        // Use --props=<file> format works if the file path is absolute
+        // calculateMetadata in Root.tsx will dynamically set the duration from props
+        // --concurrency=50% uses half of CPU cores, --log=verbose shows progress
+        const command = `npx remotion render src/remotion/index.tsx LyricVideo ${outputPath} --props=${propsPath} --fps=${fps} --crf=18 --log=verbose --concurrency=50%`;
+
+        try {
+            await execPromise(command, { cwd: process.cwd() });
+        } catch (execError: any) {
+            console.error('Remotion CLI failed:', execError);
+            const stderr = execError.stderr ? execError.stderr.toString() : '';
+            const stdout = execError.stdout ? execError.stdout.toString() : '';
+            throw new Error(`Remotion rendering failed: ${stderr || stdout || execError.message}`);
+        }
 
         console.log('Render complete.');
 
@@ -72,6 +89,7 @@ export async function POST(req: NextRequest) {
             unlinkPromise(audioPath).catch(console.error),
             unlinkPromise(coverPath).catch(console.error),
             unlinkPromise(outputPath).catch(console.error),
+            unlinkPromise(propsPath).catch(console.error),
         ]);
 
         return new NextResponse(videoBuffer, {
@@ -89,6 +107,7 @@ export async function POST(req: NextRequest) {
             if (fs.existsSync(audioPath)) await unlinkPromise(audioPath);
             if (fs.existsSync(coverPath)) await unlinkPromise(coverPath);
             if (fs.existsSync(outputPath)) await unlinkPromise(outputPath);
+            // propsPath is not defined in this scope if failed before
         } catch (cleanupError) {
             console.error('Cleanup error:', cleanupError);
         }

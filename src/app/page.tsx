@@ -17,7 +17,7 @@ import { createFileUrl, revokeFileUrl } from '@/lib/audioUtils';
 const defaultSettings: VideoSettings = {
   fontSize: 36,
   blurIntensity: 80,
-  fps: 30,
+  fps: 60,
   width: 1920,
   height: 1080,
   title: '',

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate, spring } from 'remotion';
 import { LyricDisplayProps, LyricLine } from '@/types';
 import { shouldShowSubtitle } from '@/lib/languageUtils';
+import { SPRING_PRESETS, ALL_KEYFRAMES } from '@/lib/animationPhysics';
 
 export const LyricDisplay: React.FC<LyricDisplayProps> = ({
     mainLyrics,
@@ -64,7 +65,7 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({
             ? spring({
                 frame: frame - line.startFrame,
                 fps,
-                config: { damping: 20, stiffness: 100 }
+                config: SPRING_PRESETS.default
             })
             : isActive ? 1 : 0;
 
@@ -98,9 +99,12 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({
             fontSize: isActive ? fontSize : fontSize * 0.85,
             fontWeight: isActive ? 700 : 500,
             color: '#ffffff',
-            textShadow: '0 4px 30px rgba(0,0,0,0.6)',
+            textShadow: isActive
+                ? `0 4px 30px ${colorPalette?.vibrant || 'rgba(255,255,255,0.4)'}, 0 0 60px rgba(255,255,255,0.2)`
+                : '0 4px 30px rgba(0,0,0,0.6)',
             transition: 'none',
-            willChange: 'transform, opacity, filter'
+            willChange: 'transform, opacity, filter',
+            animation: isActive ? 'lyricPunch 0.8s ease-out forwards, glowPulse 3s ease-in-out infinite' : 'none'
         };
     };
 
@@ -115,6 +119,7 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({
                 fontFamily: '"Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
             }}
         >
+            <style>{ALL_KEYFRAMES}</style>
             {visibleLines.map((line) => {
                 const styles = getLineStyles(line);
                 const isActive = line.relativeIndex === 0;
@@ -145,7 +150,7 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({
                                         marginTop: 12,
                                         fontSize: fontSize * 0.5,
                                         fontWeight: 400,
-                                        color: colorPalette.vibrant,
+                                        color: colorPalette?.vibrant || 'rgba(255, 255, 255, 0.65)',
                                         opacity: 0.85,
                                         textShadow: '0 2px 15px rgba(0,0,0,0.5)'
                                     }}

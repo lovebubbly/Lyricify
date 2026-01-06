@@ -28,15 +28,15 @@ export function Sidebar({
     canRender
 }: SidebarProps) {
     return (
-        <aside className="w-[340px] h-screen flex flex-col bg-card/50 backdrop-blur-xl border-r border-border/50 shrink-0 overflow-y-auto">
+        <aside className="w-[340px] h-screen flex flex-col bg-background/40 backdrop-blur-2xl border-r border-white/10 shrink-0 overflow-y-auto">
             {/* Header */}
-            <div className="p-6 border-b border-border/50">
+            <div className="p-6 border-b border-white/10 bg-white/5">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-primary to-rose-600 rounded-xl shadow-lg shadow-primary/20">
                         <Sparkles size={22} className="text-white" />
                     </div>
                     <span className="text-xl font-bold tracking-tight text-foreground">Lyricify</span>
-                    <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-medium border border-border/50">BETA</span>
+                    <span className="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/50 font-medium border border-white/10">BETA</span>
                 </div>
             </div>
 
@@ -44,7 +44,7 @@ export function Sidebar({
             <div className="flex-1 p-6 flex flex-col gap-8">
                 {/* Media Section */}
                 <div className="flex flex-col gap-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Media Files</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80">Media Files</p>
 
                     <div className="flex flex-col gap-3">
                         <FileUpload
@@ -66,11 +66,11 @@ export function Sidebar({
                     </div>
                 </div>
 
-                <div className="h-px bg-border/50" />
+                <div className="h-px bg-white/5" />
 
                 {/* Lyrics Section */}
                 <div className="flex flex-col gap-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Lyrics (SRT Format)</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80">Lyrics (SRT Format)</p>
 
                     <div className="flex flex-col gap-3">
                         <FileUpload
@@ -91,44 +91,44 @@ export function Sidebar({
                     </div>
                 </div>
 
-                <div className="h-px bg-border/50" />
+                <div className="h-px bg-white/5" />
 
                 {/* Settings Section */}
                 <div className="flex flex-col gap-6">
                     {/* Song Info Inputs */}
                     <div className="flex flex-col gap-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80">
                             Song Info
                         </p>
                         <div className="flex flex-col gap-3">
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-[11px] text-muted-foreground ml-1">Title</label>
+                                <label className="text-[11px] text-muted-foreground/70 ml-1">Title</label>
                                 <input
                                     type="text"
                                     placeholder="Song Title"
                                     value={settings.title || ''}
                                     onChange={(e) => onSettingsChange('title', e.target.value as any)}
-                                    className="w-full bg-card/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-muted-foreground/50"
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white/10 transition-all placeholder:text-muted-foreground/30"
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-[11px] text-muted-foreground ml-1">Artist</label>
+                                <label className="text-[11px] text-muted-foreground/70 ml-1">Artist</label>
                                 <input
                                     type="text"
                                     placeholder="Artist Name"
                                     value={settings.artist || ''}
                                     onChange={(e) => onSettingsChange('artist', e.target.value as any)}
-                                    className="w-full bg-card/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-muted-foreground/50"
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white/10 transition-all placeholder:text-muted-foreground/30"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="h-px bg-border/50" />
+                    <div className="h-px bg-white/5" />
 
                     {/* Visual Settings Sliders */}
                     <div className="flex flex-col gap-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80">
                             Visuals
                         </p>
                         <Slider
@@ -149,17 +149,44 @@ export function Sidebar({
                             unit="px"
                             onChange={(val) => onSettingsChange('blurIntensity', val)}
                         />
+
+                        {/* FPS Selector */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-wider">
+                                Frame Rate
+                            </label>
+                            <div className="flex gap-2 p-1 bg-white/5 rounded-lg border border-white/10">
+                                <button
+                                    onClick={() => onSettingsChange('fps', 30)}
+                                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${settings.fps === 30
+                                        ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                                        }`}
+                                >
+                                    30 FPS
+                                </button>
+                                <button
+                                    onClick={() => onSettingsChange('fps', 60)}
+                                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${settings.fps === 60
+                                        ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                                        }`}
+                                >
+                                    60 FPS
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-border/50 bg-card/30">
+            <div className="p-6 border-t border-white/10 bg-white/5 backdrop-blur-md">
                 <button
                     className={`w-full h-12 flex items-center justify-center gap-2 rounded-xl font-bold transition-all duration-300
                     ${canRender && !isRendering
                             ? 'bg-primary text-white shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98]'
-                            : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'}
+                            : 'bg-white/5 text-muted-foreground cursor-not-allowed'}
                     ${isRendering ? 'animate-pulse cursor-wait' : ''}
                     `}
                     onClick={onRender}
@@ -169,10 +196,10 @@ export function Sidebar({
                     {isRendering ? 'Rendering...' : 'Export Video'}
                 </button>
 
-                <p className="mt-3 text-center text-[11px] text-muted-foreground">
-                    <kbd className="inline-block px-1.5 py-0.5 bg-muted border border-border rounded text-[10px] font-sans mr-1">⌘</kbd>
+                <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">
+                    <kbd className="inline-block px-1.5 py-0.5 bg-white/10 border border-white/10 rounded text-[9px] font-sans mr-1">⌘</kbd>
                     +
-                    <kbd className="inline-block px-1.5 py-0.5 bg-muted border border-border rounded text-[10px] font-sans ml-1">Enter</kbd>
+                    <kbd className="inline-block px-1.5 py-0.5 bg-white/10 border border-white/10 rounded text-[9px] font-sans ml-1">Enter</kbd>
                     to export
                 </p>
             </div>
